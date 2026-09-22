@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard | Fake Offer Letter & Phishing Inspector</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo" onclick="switchView('home-view')">
+                <span class="fa-stack" style="font-size: 0.65em; margin-right: 4px;">
+                    <i class="fa-solid fa-shield fa-stack-2x" style="color: var(--primary-color);"></i>
+                    <i class="fa-solid fa-magnifying-glass fa-stack-1x" style="color: white; margin-top: 2px;"></i>
+                </span>
+                <span>PhishGuard</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" onclick="switchView('home-view')" class="active">Scanner</a></li>
+                <li><a href="#" onclick="switchView('how-it-works-view')">How It Works</a></li>
+                <li><a href="#" onclick="switchView('history-view')">History</a></li>
+                <li><a href="#about">About</a></li>
+            </ul>
+            <button class="nav-cta" onclick="switchView('home-view')">Scan Now</button>
+        </div>
+    </nav>
+
+    <main id="main-content">
+        <!-- HOME / SCANNER VIEW -->
+        <section id="home-view" class="view active">
+            <div class="hero">
+                <div class="hero-text">
+                    <h1>Is this job offer really legitimate?</h1>
+                    <p>Analyze job offers, appointment letters, and suspicious URLs for phishing and scam indicators before you pay, share personal information, or accept an offer.</p>
+                    <div class="hero-buttons">
+                        <button class="primary-btn" onclick="document.getElementById('scanner-card').scrollIntoView({behavior: 'smooth'})">Scan an Offer</button>
+                        <button class="secondary-btn" onclick="switchView('how-it-works-view')">How It Works</button>
+                    </div>
+                </div>
+                <div class="hero-illustration">
+                    <div class="illustration-box">
+                        <i class="fa-solid fa-file-contract"></i>
+                        <i class="fa-solid fa-shield-virus warning-icon"></i>
+                        <i class="fa-solid fa-magnifying-glass search-doc-icon"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div id="scanner-card" class="card scanner-card">
+                <h2>Inspect a Job Offer</h2>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('text-tab', this)">Paste Offer Text</button>
+                    <button class="tab-btn" onclick="switchTab('file-tab', this)">Upload Document</button>
+                    <button class="tab-btn" onclick="switchTab('url-tab', this)">Check URL</button>
+                </div>
+
+                <div class="tab-content active" id="text-tab">
+                    <textarea id="offerText" placeholder="Paste the job offer, recruitment message, or appointment letter here..." aria-label="Offer Text"></textarea>
+                    <div class="char-counter"><span id="charCount">0</span> characters</div>
+                </div>
+
+                <div class="tab-content" id="file-tab">
+                    <div class="upload-area">
+                        <i class="fa-solid fa-file-arrow-up"></i>
+                        <h3>Drop your offer letter here</h3>
+                        <p>PDF, PNG, JPG supported</p>
+                        <button class="upload-btn">Choose File</button>
+                        <p class="upload-note">Your document is analyzed for suspicious patterns and payment requests.</p>
+                        <input type="file" id="fileInput" hidden>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="url-tab">
+                    <div class="url-input-container">
+                        <i class="fa-solid fa-link"></i>
+                        <input type="url" id="companyUrl" placeholder="https://example.com/job-offer" aria-label="Company URL">
+                    </div>
+                    <p class="security-note"><i class="fa-solid fa-lock"></i> We check the URL for suspicious characteristics and domain information.</p>
+                </div>
+
+                <div id="errorBox" class="error-box hidden"></div>
+                
+                <div class="scan-action">
+                    <button id="scanBtn" class="primary-btn full-width" onclick="startScan()">Analyze Offer</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- LOADING STATE -->
+        <section id="loading-view" class="view hidden" aria-live="polite">
+            <div class="card loading-card">
+                <h2>Analyzing your offer...</h2>
+                <div class="loader-spinner"></div>
+                <div class="loading-percentage-wrapper">
+                    <span id="loading-percentage">0%</span>
+                </div>
+                <ul class="loading-steps">
+                    <li id="step1" class="step active"><i class="fa-solid fa-circle-notch fa-spin"></i> Extracting document content</li>
+                    <li id="step2" class="step pending"><i class="fa-regular fa-circle"></i> Detecting suspicious language</li>
+                    <li id="step3" class="step pending"><i class="fa-regular fa-circle"></i> Checking payment-related red flags</li>
+                    <li id="step4" class="step pending"><i class="fa-regular fa-circle"></i> Inspecting domain information</li>
+                    <li id="step5" class="step pending"><i class="fa-regular fa-circle"></i> Calculating threat index</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- RESULT VIEW -->
+        <section id="result-view" class="view hidden">
+            <div class="result-header" style="text-align: center; margin-bottom: 2rem;">
+                <h2>Security Analysis Complete</h2>
+                <div id="verdict-box" class="alert-box hidden" style="margin-top: 1rem; justify-content: center; max-width: 600px; margin-left: auto; margin-right: auto;"></div>
+            </div>
+            
+            <div class="dashboard-grid">
+                <!-- Threat Meter -->
+                <div class="card threat-card">
+                    <div class="meter-container">
+                        <svg class="circular-chart" viewBox="0 0 36 36">
+                            <path class="circle-bg"
+                            d="M18 2.0845
+                                a 15.9155 15.9155 0 0 1 0 31.831
+                                a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                            <path class="circle" id="meter-path"
+                            stroke-dasharray="0, 100"
+                            d="M18 2.0845
+                                a 15.9155 15.9155 0 0 1 0 31.831
+                                a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                            <text x="18" y="20.35" class="percentage" id="meter-score">0</text>
+                        </svg>
+                        <div class="risk-label" id="risk-label">Unknown Risk</div>
+                    </div>
+                    <h3>Scam Threat Index</h3>
+                    <p class="disclaimer">This score represents the risk indicators detected in the submitted content. It is not a definitive determination that the offer is fraudulent.</p>
+                </div>
+
+                <!-- Summary Card -->
+                <div class="card summary-card">
+                    <h3>Why this offer was flagged</h3>
+                    <div class="evidence-list" id="evidence-list">
+                        <!-- Evidence cards will be injected here -->
+                    </div>
+                </div>
+
+                <!-- Document Evidence -->
+                <div class="card doc-evidence-card">
+                    <h3>Evidence Found in Your Offer</h3>
+                    <div id="doc-highlights">
+                        <!-- Highlights will be injected here -->
+                    </div>
+                </div>
+
+                <!-- Domain Inspection -->
+                <div class="card domain-card">
+                    <h3>Domain Inspection</h3>
+                    <table class="domain-table">
+                        <tr>
+                            <td>Domain:</td>
+                            <td id="domain-name" class="bold-text">Not provided</td>
+                        </tr>
+                        <tr>
+                            <td>Domain Age:</td>
+                            <td id="domain-age" class="bold-text">N/A</td>
+                        </tr>
+                        <tr>
+                            <td>HTTPS:</td>
+                            <td class="bold-text safe-text">Enabled</td>
+                        </tr>
+                    </table>
+                    <p class="disclaimer">Domain age and technical indicators are signals, not proof of fraud.</p>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="card recommendations-card">
+                <h3>What should you do next?</h3>
+                <div class="rec-grid" id="rec-grid">
+                    <div class="rec-item">
+                        <i class="fa-solid fa-check-circle safe-text"></i>
+                        <p>Verify the employer through its official website</p>
+                    </div>
+                    <div class="rec-item">
+                        <i class="fa-solid fa-check-circle safe-text"></i>
+                        <p>Contact the company using independently verified contact information</p>
+                    </div>
+                    <div class="rec-item">
+                        <i class="fa-solid fa-circle-exclamation warning-text"></i>
+                        <p>Do not pay recruitment, equipment, or registration fees without verification</p>
+                    </div>
+                    <div class="rec-item">
+                        <i class="fa-solid fa-circle-exclamation warning-text"></i>
+                        <p>Avoid sharing sensitive identity or banking information</p>
+                    </div>
+                </div>
+                <button class="primary-btn full-width mt-4" onclick="switchView('home-view')">Scan Another Offer</button>
+            </div>
+        </section>
+
+        <!-- HISTORY VIEW -->
+        <section id="history-view" class="view hidden">
+            <div class="card history-card">
+                <h2>Scan History</h2>
+                <div class="history-controls">
+                    <input type="text" placeholder="Search..." class="search-input">
+                    <select class="filter-select">
+                        <option>All Risks</option>
+                        <option>High Risk</option>
+                        <option>Moderate Risk</option>
+                        <option>Low Risk</option>
+                    </select>
+                </div>
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Target</th>
+                            <th>Threat Index</th>
+                            <th>Risk Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Hardcoded examples for demo -->
+                        <tr>
+                            <td>21 Sep 2026</td>
+                            <td>Job Offer</td>
+                            <td>ABC Technologies</td>
+                            <td>78</td>
+                            <td><span class="badge badge-high">High Risk</span></td>
+                        </tr>
+                        <tr>
+                            <td>20 Sep 2026</td>
+                            <td>URL</td>
+                            <td>example.com</td>
+                            <td>31</td>
+                            <td><span class="badge badge-moderate">Moderate</span></td>
+                        </tr>
+                        <tr>
+                            <td>19 Sep 2026</td>
+                            <td>PDF</td>
+                            <td>Appointment Letter</td>
+                            <td>12</td>
+                            <td><span class="badge badge-low">Low Risk</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- HOW IT WORKS VIEW -->
+        <section id="how-it-works-view" class="view hidden">
+            <div class="card hiw-card">
+                <h2>How It Works</h2>
+                <div class="workflow-steps">
+                    <div class="wf-step">
+                        <div class="wf-number">1</div>
+                        <h3>Submit</h3>
+                        <p>Paste text, upload an offer letter, or enter a URL.</p>
+                    </div>
+                    <div class="wf-step">
+                        <div class="wf-number">2</div>
+                        <h3>Extract</h3>
+                        <p>Relevant document and URL information is extracted.</p>
+                    </div>
+                    <div class="wf-step">
+                        <div class="wf-number">3</div>
+                        <h3>Inspect</h3>
+                        <p>Rules, security indicators, domain information, and AI-assisted analysis are applied.</p>
+                    </div>
+                    <div class="wf-step">
+                        <div class="wf-number">4</div>
+                        <h3>Explain</h3>
+                        <p>Receive a threat index with evidence and explanations.</p>
+                    </div>
+                </div>
+                <div class="architecture-diagram">
+                    <p>User <i class="fa-solid fa-arrow-right"></i> Web Application <i class="fa-solid fa-arrow-right"></i> Spring Boot API <i class="fa-solid fa-arrow-right"></i> Security Rules + Domain Inspection + AI Analysis <i class="fa-solid fa-arrow-right"></i> Threat Scoring Engine <i class="fa-solid fa-arrow-right"></i> Evidence-Based Security Report</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="about" class="about-section">
+            <h2>Built for safer job searching</h2>
+            <p>PhishGuard is designed to help users identify warning signs in suspicious job offers, fake appointment letters, and phishing URLs.</p>
+            <div class="alert-box">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <p><strong>Important:</strong> PhishGuard provides risk assessment and security indicators. It does not guarantee that an offer is legitimate or fraudulent.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i class="fa-solid fa-shield-halved"></i> PhishGuard
+                <p class="tagline">"Inspect before you trust."</p>
+            </div>
+            <div class="footer-links">
+                <a href="#" onclick="switchView('home-view')">Scanner</a>
+                <a href="#" onclick="switchView('how-it-works-view')">How It Works</a>
+                <a href="#">Security</a>
+                <a href="#about">About</a>
+                <a href="#">Privacy</a>
+            </div>
+        </div>
+    </footer>
+    <script src="app.js"></script>
+</body>
+</html>
